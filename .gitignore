@@ -1,6 +1,7 @@
-src/node_modules/
+node_modules/
 .idea/
 data
 *.log
 .env
 dist/
+.vscode
