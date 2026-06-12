@@ -41,7 +41,7 @@ const UserSchema = new Schema(
     methods: {
       getSignedJwtToken() {
         return sign({ id: this._id }, JWT_SECRET, {
-          expiresIn: JWT_EXPIRE,
+          expiresIn: JWT_EXPIRE as any,
         });
       },
       getResetPasswordRoken() {

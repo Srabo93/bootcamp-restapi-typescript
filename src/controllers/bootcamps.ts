@@ -93,7 +93,7 @@ export const deleteBootcamp = asyncHandler(
       serverResponses.sendError(res, messages.UNAUTHORIZED);
     }
 
-    bootcamp?.remove();
+    await bootcamp?.deleteOne();
     serverResponses.sendSuccess(res, messages.SUCCESSFUL_DELETE, {});
   },
 );

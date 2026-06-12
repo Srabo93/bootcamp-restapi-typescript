@@ -112,8 +112,9 @@ BootcampSchema.pre("save", async function () {
 
 /**CASCADE DELETE COURSES WHEN A BOOTCAMP IS DELETED */
 BootcampSchema.pre(
-  "remove",
-  async function (this: { _id: Schema.Types.ObjectId }) {
+  "deleteOne",
+  { document: true, query: false },
+  async function () {
     await CourseModel.deleteMany({ bootcamp: this._id });
   }
 );

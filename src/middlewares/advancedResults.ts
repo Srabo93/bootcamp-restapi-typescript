@@ -26,7 +26,7 @@ const advancedResults =
     res: Response,
     next: NextFunction,
   ) => {
-    let query;
+    let query: any;
     //Copy req. query
     const reqQuery = { ...req.query };
     //Fields to exclude

@@ -102,7 +102,7 @@ export const deleteReview = asyncHandler(
       serverResponse.sendError(res, messages.UNAUTHORIZED);
     }
 
-    await review?.remove();
+    await review?.deleteOne();
     serverResponse.sendSuccess(res, messages.SUCCESSFUL_DELETE, {});
   }
 );

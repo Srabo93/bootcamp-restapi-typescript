@@ -79,8 +79,12 @@ CourseSchema.post("save", function () {
 });
 
 /*Call getAverageCost before remove */
-CourseSchema.pre<Course>("remove", async function () {
-  await CourseModel.getAverageCost(this.bootcamp);
-});
+CourseSchema.pre(
+  "deleteOne",
+  { document: true, query: false },
+  async function () {
+    await CourseModel.getAverageCost(this.bootcamp);
+  }
+);
 
 export default CourseModel;

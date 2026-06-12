@@ -71,7 +71,11 @@ ReviewSchema.post("save", function () {
 });
 
 /*Call getAverageRating before remove */
-ReviewSchema.pre<Review>("remove", async function () {
-  ReviewModel.getAverageRating(this.bootcamp);
-});
+ReviewSchema.pre(
+  "deleteOne",
+  { document: true, query: false },
+  async function () {
+    await ReviewModel.getAverageRating(this.bootcamp);
+  }
+);
 export default ReviewModel;

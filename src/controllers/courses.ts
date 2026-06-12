@@ -108,7 +108,7 @@ export const deleteCourse = asyncHandler(
     if (course?.user.toString() !== req.user.id && req.user.role !== "admin") {
       serverResponse.sendError(res, messages.UNAUTHORIZED);
     }
-    await CourseModel.remove();
+    await course?.deleteOne();
     serverResponse.sendSuccess(res, messages.SUCCESSFUL, {});
   },
 );

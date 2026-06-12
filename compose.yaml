@@ -1,18 +1,49 @@
 services:
   mongodb:
-    restart: always
-    image: mongo:4.2.0
+    image: docker.io/library/mongo:8
+    restart: unless-stopped
     volumes:
-      - ./data:/data/db
-    expose:
-      - "27017"
+      - ./data/mongodb:/data/db
+
+  minio:
+    image: docker.io/minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: change-me-please
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./data/minio:/data
+
   server:
     build:
       context: ./src
-      dockerfile: Dockerfile
+    restart: unless-stopped
     environment:
       NODE_ENV: development
+      MONGODB_URI: mongodb://mongodb:27017/app
+      GEOCODER_API_KEY: placeholder-key
+      JWT_SECRET: keyboardcat
+      JWT_EXPIRE: 1h
+      JWT_COOKIE_EXPIRE: 1h
+      SMTP_HOST: foo
+      SMTP_PORT: 587
+      SMTP_EMAIL: noreply@devcamper.io
+      SMTP_PASSWORD: placeholder
+      FROM_EMAIL: noreply@devcamper.io
+      FROM_NAME: DevCamper
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: admin
+      S3_SECRET_KEY: change-me-please
+      S3_BUCKET: uploads
     ports:
-      - 8080:8080
+      - "8080:8080"
     volumes:
-      - ./src/:/usr/src/app
+      - ./src:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - mongodb
+      - minio

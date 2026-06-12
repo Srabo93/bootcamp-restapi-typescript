@@ -1,12 +1,11 @@
-import { ConnectOptions, connect } from "mongoose";
+import { connect } from "mongoose";
 import { MONGODB_URI } from "../config/config";
 
 const connectDb = async () => {
   const options = {
-    useNewUrlParser: true,
-    autoIndex: false, // Don't build indexes
-    maxPoolSize: 10, // Maintain up to 10 socket connections
-  } as ConnectOptions;
+    autoIndex: false,
+    maxPoolSize: 10,
+  };
 
   try {
     const connection = await connect(MONGODB_URI, options);
