@@ -2,6 +2,8 @@ services:
   mongodb:
     image: docker.io/library/mongo:8
     restart: unless-stopped
+    ports:
+      - "27017:27017"
     volumes:
       - ./data/mongodb:/data/db
 
@@ -20,7 +22,7 @@ services:
 
   server:
     build:
-      context: ./src
+      context: .
     restart: unless-stopped
     environment:
       NODE_ENV: development
@@ -42,7 +44,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./src:/usr/src/app
+      - .:/usr/src/app
       - /usr/src/app/node_modules
     depends_on:
       - mongodb

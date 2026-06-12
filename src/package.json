@@ -9,7 +9,6 @@
     "lint": "prettier --check {**/,}*.js",
     "seed:db": "tsx seeder -i",
     "delete:db": "tsx seeder -d",
-    "container": "cd ../ && docker compose up -d",
     "dev": "tsx watch ./server.ts"
   },
   "author": "Armin Srabovic",
