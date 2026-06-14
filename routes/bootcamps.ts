@@ -1,78 +1,80 @@
-import express, { NextFunction, Request, Response } from "express";
-import Bottleneck from "bottleneck";
+import { Hono } from "hono";
 import BootcampModel from "../models/Bootcamp";
-import {
-  bootcampPhotoUpload,
-  createBootcamp,
-  deleteBootcamp,
-  getBootcamp,
-  getBootcamps,
-  getBootcampsInRadius,
-  updateBootcamp,
-} from "../controllers/bootcamps";
-import { authorize, protect } from "../middlewares/auth";
-import advancedResults from "../middlewares/advancedResults";
-/*Include other resources for re-routing*/
-import coursesRouter from "./courses";
-import reviewsRouter from "./reviews";
-import validate from "../middlewares/validate";
-import {
-  byIdBootcampScheme,
-  createBootcampScheme,
-  deleteBootcampScheme,
-  updateBootcampScheme,
-} from "../utils/zod/bootcampSchemas";
+import ReviewModel from "../models/Review";
+// import {
+//   bootcampPhotoUpload,
+//   createBootcamp,
+//   deleteBootcamp,
+//   getBootcamp,
+//   getBootcamps,
+//   getBootcampsInRadius,
+//   updateBootcamp,
+// } from "../controllers/bootcamps";
+// import advancedResults from "../middlewares/advancedResults";
 
-const router = express.Router();
+const app = new Hono();
 
-const limiter = new Bottleneck({
-  maxConcurrent: 10, // Max number of requests to process at once
-  minTime: 1000, // Minimum time (in milliseconds) between requests
+app.get("/", async (c) => {
+  const allBootcamps = await BootcampModel.find({}).populate("courses");
+
+  return c.json(allBootcamps);
 });
 
-/* Re-route into other resource */
-router.use("/:bootcampId/courses", coursesRouter);
-router.use("/:bootcampId/reviews", reviewsRouter);
+app.get("/:bootcampId", async (c) => {
+  const param = c.req.param("bootcampId");
+  const bootcamp = await BootcampModel.findById(param).populate("courses");
 
-router.use(async (req: Request, res: Response, next: NextFunction) => {
-  await limiter.schedule(async () => {
-    next();
-  });
+  return c.json(bootcamp);
 });
 
-
-router
-  .route("/")
-  .get(advancedResults(BootcampModel, "courses"), getBootcamps)
-  .post(
-    protect,
-    validate(createBootcampScheme),
-    authorize("publisher", "admin"),
-    createBootcamp,
-  );
-
-router
-  .route("/:id")
-  .get(validate(byIdBootcampScheme), getBootcamp)
-  .put(
-    protect,
-    validate(updateBootcampScheme),
-    authorize("publisher", "admin"),
-    updateBootcamp,
+app.get("/:bootcampId/courses", async (c) => {
+  const bootCampId = c.req.param("bootcampId");
+  const bootCampRelatedCourses = await BootcampModel.findById(
+    bootCampId,
+    "name description website"
   )
-  .delete(
-    protect,
-    validate(deleteBootcampScheme),
-    authorize("publisher", "admin"),
-    deleteBootcamp,
-  );
+    .populate("courses")
+    .exec();
 
-router
-  .route("/:id/photo")
-  .put(
-    protect,
-    authorize("publisher", "admin"),
-    bootcampPhotoUpload,
-  ), router.route("/radius/:zipcode/:distance").get(getBootcampsInRadius);
+  return c.json(bootCampRelatedCourses);
+});
 
-export default router;
+app.get("/:bootcampId/reviews", async (c) => {
+  const bootCampId = c.req.param("bootcampId");
+  const bootCampRelatedReviews = await ReviewModel.findById(bootCampId).exec();
+
+  return c.json(bootCampRelatedReviews);
+});
+
+export default app;
+
+// router
+//   .route("/")
+//   .post(
+//     protect,
+//     validate(createBootcampScheme),
+//     authorize("publisher", "admin"),
+//     createBootcamp
+//   );
+//
+// router
+//   .route("/:id")
+//   .put(
+//     protect,
+//     validate(updateBootcampScheme),
+//     authorize("publisher", "admin"),
+//     updateBootcamp
+//   )
+//   .delete(
+//     protect,
+//     validate(deleteBootcampScheme),
+//     authorize("publisher", "admin"),
+//     deleteBootcamp
+//   );
+//
+// router
+//   .route("/:id/photo")
+//   .put(protect, authorize("publisher", "admin"), bootcampPhotoUpload),
+//   router.route("/radius/:zipcode/:distance").get(getBootcampsInRadius);
+//
+// export default router;
