@@ -31,10 +31,10 @@ services:
       JWT_SECRET: keyboardcat
       JWT_EXPIRE: 1h
       JWT_COOKIE_EXPIRE: 1h
-      SMTP_HOST: foo
-      SMTP_PORT: 587
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
       SMTP_EMAIL: noreply@devcamper.io
-      SMTP_PASSWORD: placeholder
+      SMTP_PASSWORD: any
       FROM_EMAIL: noreply@devcamper.io
       FROM_NAME: DevCamper
       S3_ENDPOINT: http://minio:9000
@@ -49,3 +49,11 @@ services:
     depends_on:
       - mongodb
       - minio
+      - mailpit
+
+  mailpit:
+    image: axllent/mailpit
+    restart: unless-stopped
+    ports:
+      - 1025:1025
+      - 8025:8025
