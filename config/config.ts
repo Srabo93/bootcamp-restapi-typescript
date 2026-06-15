@@ -11,6 +11,11 @@ export const SMTP_EMAIL = process.env.SMTP_EMAIL as string;
 export const SMTP_PASSWORD = process.env.SMTP_PASSWORD as string;
 export const FROM_EMAIL = process.env.FROM_EMAIL as string;
 export const FROM_NAME = process.env.FROM_NAME as string;
+export const S3_ENDPOINT = process.env.S3_ENDPOINT;
+export const S3_ACCESS_KEY = process.env.S3_ACCESS_KEY as string;
+export const S3_SECRET_KEY = process.env.S3_SECRET_KEY as string;
+export const S3_BUCKET = process.env.S3_BUCKET as string;
+export const S3_REGION = process.env.S3_REGION || "us-east-1";
 
 if (!MONGODB_URI) {
   console.log("No client secret. Set MONGODB_URI environment variable.");
@@ -58,5 +63,17 @@ if (!FROM_EMAIL) {
 }
 if (!FROM_NAME) {
   console.log("No client secret. Set FROM_NAME environment variable.");
+  process.exit(1);
+}
+if (!S3_ACCESS_KEY) {
+  console.log("No client secret. Set S3_ACCESS_KEY environment variable.");
+  process.exit(1);
+}
+if (!S3_SECRET_KEY) {
+  console.log("No client secret. Set S3_SECRET_KEY environment variable.");
+  process.exit(1);
+}
+if (!S3_BUCKET) {
+  console.log("No client secret. Set S3_BUCKET environment variable.");
   process.exit(1);
 }

@@ -1,7 +1,7 @@
 import express, { NextFunction, Request, Response } from "express";
 import Bottleneck from "bottleneck";
 import ReviewModel from "../models/Review";
-import { authorize, protect } from "../middlewares/auth";
+import { authorize, authenticate } from "../middlewares/auth";
 import advancedResults from "../middlewares/advancedResults";
 import {
   addReview,
@@ -39,19 +39,19 @@ router
     }),
     getReviews
   )
-  .post(protect, authorize("user", "admin"), addReview);
+  .post(authenticate, authorize("user", "admin"), addReview);
 
 router
   .route("/:id")
   .get(validate(byIdReviewScheme), getReview)
   .put(
-    protect,
+    authenticate,
     validate(updateReviewScheme),
     authorize("user", "admin"),
     updateReview
   )
   .delete(
-    protect,
+    authenticate,
     validate(deleteReviewScheme),
     authorize("user", "admin"),
     deleteReview

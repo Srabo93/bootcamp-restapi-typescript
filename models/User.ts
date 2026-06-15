@@ -1,8 +1,5 @@
 import { model, Schema, InferSchemaType } from "mongoose";
-import { genSalt, hash, compare } from "bcryptjs";
-import { sign } from "jsonwebtoken";
-import * as crypto from "crypto";
-import { JWT_EXPIRE, JWT_SECRET } from "../config/config";
+import { genSalt, hash } from "bcryptjs";
 
 const UserSchema = new Schema(
   {
@@ -37,43 +34,16 @@ const UserSchema = new Schema(
       default: Date.now,
     },
   },
-  {
-    methods: {
-      getSignedJwtToken() {
-        return sign({ id: this._id }, JWT_SECRET, {
-          expiresIn: JWT_EXPIRE as any,
-        });
-      },
-      getResetPasswordRoken() {
-        const resetToken = crypto.randomBytes(20).toString("hex");
-
-        /*Hash token and set to resetPasswordToken field */
-        this.resetPasswordToken = crypto
-          .createHash("sha256")
-          .update(resetToken)
-          .digest("hex");
-
-        /*Set Expiration */
-        this.resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000);
-
-        return resetToken;
-      },
-      async matchPassword(enteredPassword: string) {
-        return await compare(enteredPassword, this.password);
-      },
-    },
-  }
+  { toJSON: { virtuals: true }, toObject: { virtuals: true } },
 );
 
-UserSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) {
-    next();
-  }
+UserSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
   const salt = await genSalt(10);
   this.password = await hash(this.password, salt);
 });
 
-const UserModel = model("User", UserSchema);
-
 export type User = InferSchemaType<typeof UserSchema>;
+
+const UserModel = model("User", UserSchema);
 export default UserModel;

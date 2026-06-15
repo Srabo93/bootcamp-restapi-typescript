@@ -1,6 +1,8 @@
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import BootcampModel from "../models/Bootcamp";
 import ReviewModel from "../models/Review";
+import { authenticate, authorize } from "../middlewares/auth";
 // import {
 //   bootcampPhotoUpload,
 //   createBootcamp,
@@ -46,12 +48,26 @@ app.get("/:bootcampId/reviews", async (c) => {
   return c.json(bootCampRelatedReviews);
 });
 
+app.post("/", authenticate, authorize("publisher", "admin"), async (c) => {
+  const body = await c.req.json();
+  const user = c.get("user");
+  const bootcampExists = await BootcampModel.findOne({ user: user._id });
+
+  if (bootcampExists) {
+    throw new HTTPException(409, { message: "Already exists" });
+  }
+
+  body.user = user._id;
+  const newBootcamp = await BootcampModel.create(body);
+  return c.json(newBootcamp, 201);
+});
+
 export default app;
 
 // router
 //   .route("/")
 //   .post(
-//     protect,
+//     authenticate,
 //     validate(createBootcampScheme),
 //     authorize("publisher", "admin"),
 //     createBootcamp
@@ -60,13 +76,13 @@ export default app;
 // router
 //   .route("/:id")
 //   .put(
-//     protect,
+//     authenticate,
 //     validate(updateBootcampScheme),
 //     authorize("publisher", "admin"),
 //     updateBootcamp
 //   )
 //   .delete(
-//     protect,
+//     authenticate,
 //     validate(deleteBootcampScheme),
 //     authorize("publisher", "admin"),
 //     deleteBootcamp
@@ -74,7 +90,7 @@ export default app;
 //
 // router
 //   .route("/:id/photo")
-//   .put(protect, authorize("publisher", "admin"), bootcampPhotoUpload),
+//   .put(authenticate, authorize("publisher", "admin"), bootcampPhotoUpload),
 //   router.route("/radius/:zipcode/:distance").get(getBootcampsInRadius);
 //
 // export default router;

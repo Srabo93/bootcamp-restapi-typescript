@@ -1,6 +1,4 @@
 // import express, { Request, Response } from "express";
-import path from "path";
-import { NODE_ENV } from "./config/config";
 // import errorHandler from "./middlewares/error";
 // import cookieParser from "cookie-parser";
 // import bodyParser from "body-parser";
@@ -9,23 +7,20 @@ import { NODE_ENV } from "./config/config";
 // import helmet from "helmet";
 
 import { Hono } from "hono";
+
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
 import connectDb from "./db/index";
+import { ensureBucket } from "./config/s3";
 import { serve } from "@hono/node-server";
 import { HTTPException } from "hono/http-exception";
 
-//connection from db here
 connectDb();
+ensureBucket();
 
-// //routing
-// import bootcampRoutes from "./routes/bootcamps";
-// import authRoutes from "./routes/auth";
-// import reviewRoutes from "./routes/reviews";
-// import courseRoutes from "./routes/courses";
-// import usersRoutes from "./routes/users";
 import bootcamps from "./routes/bootcamps";
+import auth from "./routes/auth";
 
 const app = new Hono().basePath("/api/v1");
 
@@ -37,6 +32,7 @@ app.get("/", (c) => {
 });
 
 app.route("/bootcamps", bootcamps);
+app.route("/auth", auth);
 
 app.onError((err, c) => {
   if (err instanceof HTTPException) {
@@ -45,6 +41,7 @@ app.onError((err, c) => {
   console.error(err);
   return c.text("Internal Server Error", 500);
 });
+
 serve({
   fetch: app.fetch,
   port: 8080,

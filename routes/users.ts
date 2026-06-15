@@ -1,7 +1,7 @@
 import express, { NextFunction, Request, Response } from "express";
 import Bottleneck from "bottleneck";
 import UserModel from "../models/User";
-import { authorize, protect } from "../middlewares/auth";
+import { authorize, authenticate } from "../middlewares/auth";
 import advancedResults from "../middlewares/advancedResults";
 import {
   createUser,
@@ -31,7 +31,7 @@ router.use(async (req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-router.use(protect);
+router.use(authenticate);
 router.use(authorize("admin"));
 router
   .route("/")

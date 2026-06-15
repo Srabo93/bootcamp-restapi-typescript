@@ -1,7 +1,7 @@
 import express, { NextFunction, Request, Response } from "express";
 import Bottleneck from "bottleneck";
 import CourseModel from "../models/Course";
-import { authorize, protect } from "../middlewares/auth";
+import { authorize, authenticate } from "../middlewares/auth";
 import advancedResults from "../middlewares/advancedResults";
 import {
   addCourse,
@@ -38,19 +38,19 @@ router.route("/").get(
   }),
   getCourses,
 ).post(
-  protect,
+  authenticate,
   validate(addCourseScheme),
   authorize("publisher", "admin"),
   addCourse,
 );
 
 router.route("/:id").get(validate(byIdCourseScheme), getCourse).put(
-  protect,
+  authenticate,
   validate(updateCourseScheme),
   authorize("publisher", "admin"),
   updateCourse,
 ).delete(
-  protect,
+  authenticate,
   validate(deleteCourseScheme),
   authorize("publisher", "admin"),
   deleteCourse,
