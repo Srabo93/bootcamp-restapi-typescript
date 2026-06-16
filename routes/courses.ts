@@ -1,59 +1,112 @@
-import express, { NextFunction, Request, Response } from "express";
-import Bottleneck from "bottleneck";
+import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
+import { HTTPException } from "hono/http-exception";
 import CourseModel from "../models/Course";
-import { authorize, authenticate } from "../middlewares/auth";
-import advancedResults from "../middlewares/advancedResults";
-import {
-  addCourse,
-  deleteCourse,
-  getCourse,
-  getCourses,
-  updateCourse,
-} from "../controllers/courses";
-import validate from "../middlewares/validate";
-import {
-  addCourseScheme,
-  byIdCourseScheme,
-  deleteCourseScheme,
-  updateCourseScheme,
-} from "../utils/zod/coursesSchemas";
+import BootcampModel from "../models/Bootcamp";
+import { authenticate, authorize } from "../middlewares/auth";
 
-const router = express.Router({ mergeParams: true });
+const app = new Hono();
 
-const limiter = new Bottleneck({
-  maxConcurrent: 10, // Max number of requests to process at once
-  minTime: 1000, // Minimum time (in milliseconds) between requests
+app.get("/", async (c) => {
+  const courses = await CourseModel.find({});
+  return c.json({ success: true, count: courses.length, data: courses }, 200);
 });
 
-router.use(async (req: Request, res: Response, next: NextFunction) => {
-  await limiter.schedule(async () => {
-    next();
-  });
-});
-
-router.route("/").get(
-  advancedResults(CourseModel, {
-    path: "bootcamp",
-    select: "name description",
-  }),
-  getCourses,
-).post(
-  authenticate,
-  validate(addCourseScheme),
-  authorize("publisher", "admin"),
-  addCourse,
+app.get(
+  "/:id",
+  zValidator("param", z.object({ id: z.string().trim().max(256) })),
+  async (c) => {
+    const { id } = c.req.valid("param");
+    const course = await CourseModel.findById(id).populate({
+      path: "bootcamp",
+      select: "name description",
+    });
+    if (!course) throw new HTTPException(404, { message: "Course not found" });
+    return c.json({ success: true, data: course }, 200);
+  }
 );
 
-router.route("/:id").get(validate(byIdCourseScheme), getCourse).put(
+app.post(
+  "/",
   authenticate,
-  validate(updateCourseScheme),
   authorize("publisher", "admin"),
-  updateCourse,
-).delete(
-  authenticate,
-  validate(deleteCourseScheme),
-  authorize("publisher", "admin"),
-  deleteCourse,
+  zValidator(
+    "json",
+    z.object({
+      title: z.string().trim().min(1).max(256),
+      description: z.string().trim().min(1).max(256),
+      weeks: z.number().min(1).max(20),
+      tuition: z.number().min(1000).max(40000),
+      minimumSkill: z.enum(["beginner", "intermediate", "advanced"]),
+      scholarshipAvailable: z.boolean(),
+      bootcamp: z.string().trim().max(256),
+    })
+  ),
+  async (c) => {
+    const body = c.req.valid("json");
+    const user = c.get("user");
+    const bootcamp = await BootcampModel.findById(body.bootcamp);
+    if (!bootcamp)
+      throw new HTTPException(404, { message: "Bootcamp not found" });
+    if (bootcamp.user.toString() !== user._id && user.role !== "admin") {
+      throw new HTTPException(401, { message: "Unauthorized" });
+    }
+    const course = await CourseModel.create({ ...body, user: user._id });
+    return c.json({ success: true, data: course }, 201);
+  }
 );
 
-export default router;
+app.put(
+  "/:id",
+  authenticate,
+  authorize("publisher", "admin"),
+  zValidator("param", z.object({ id: z.string().trim().max(256) })),
+  zValidator(
+    "json",
+    z.object({
+      title: z.string().trim().min(1).max(256).optional(),
+      description: z.string().trim().min(1).max(256).optional(),
+      weeks: z.number().min(1).max(20).optional(),
+      tuition: z.number().min(1000).max(40000).optional(),
+      minimumSkill: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+      scholarshipAvailable: z.boolean().optional(),
+      bootcamp: z.string().trim().max(256).optional(),
+    })
+  ),
+  async (c) => {
+    const { id } = c.req.valid("param");
+    const body = c.req.valid("json");
+    const user = c.get("user");
+    let course = await CourseModel.findById(id);
+    if (!course) throw new HTTPException(404, { message: "Course not found" });
+    if (course.user.toString() !== user._id && user.role !== "admin") {
+      throw new HTTPException(401, { message: "Unauthorized" });
+    }
+    course = await CourseModel.findByIdAndUpdate(id, body, {
+      new: true,
+      runValidators: true,
+    });
+    return c.json({ success: true, data: course }, 200);
+  }
+);
+
+app.delete(
+  "/:id",
+  authenticate,
+  authorize("publisher", "admin"),
+  zValidator("param", z.object({ id: z.string().trim().max(256) })),
+  async (c) => {
+    const { id } = c.req.valid("param");
+    const user = c.get("user");
+    const course = await CourseModel.findById(id);
+    if (!course) throw new HTTPException(404, { message: "Course not found" });
+    if (course.user.toString() !== user._id && user.role !== "admin") {
+      throw new HTTPException(401, { message: "Unauthorized" });
+    }
+    await course.deleteOne();
+    return c.json({ success: true, data: {} }, 200);
+  }
+);
+
+export default app;

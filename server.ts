@@ -22,6 +22,8 @@ ensureBucket();
 import bootcamps from "./routes/bootcamps";
 import auth from "./routes/auth";
 import reviews from "./routes/reviews";
+import courses from "./routes/courses";
+import users from "./routes/users";
 
 const app = new Hono().basePath("/api/v1");
 
@@ -35,6 +37,8 @@ app.get("/", (c) => {
 app.route("/bootcamps", bootcamps);
 app.route("/auth", auth);
 app.route("/reviews", reviews);
+app.route("/courses", courses);
+app.route("/users", users);
 
 app.onError((err, c) => {
   if (err instanceof HTTPException) {
@@ -65,14 +69,3 @@ process.on("SIGTERM", () => {
   });
 });
 export default app;
-
-// app.use(bodyParser.json());
-// app.use(bodyParser.urlencoded({ extended: false }));
-// app.use(express.static(path.join(__dirname, "public")));
-//
-// app.use("/api/v1/bootcamps", upload.single("file"), bootcampRoutes);
-// app.use("/api/v1/auth", authRoutes);
-// app.use("/api/v1/reviews", reviewRoutes);
-// app.use("/api/v1/courses", courseRoutes);
-// app.use("/api/v1/users", usersRoutes);
-//

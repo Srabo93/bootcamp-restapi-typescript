@@ -5,7 +5,7 @@ import { HTTPException } from "hono/http-exception";
 import { JWT_SECRET } from "../config/config";
 
 type Variables = JwtVariables & {
-  user: { _id: string; role: "user" | "publisher" };
+  user: { _id: string; role: "user" | "publisher" | "admin" };
 };
 
 export const authenticate = async (

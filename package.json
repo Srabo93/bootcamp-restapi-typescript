@@ -20,7 +20,6 @@
     "@hono/zod-validator": "^0.8.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.18.2",
-    "bottleneck": "^2.19.5",
     "cookie-parser": "^1.4.4",
     "cors": "^2.8.4",
     "express": "^4.18.2",
