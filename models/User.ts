@@ -1,5 +1,5 @@
 import { model, Schema, InferSchemaType } from "mongoose";
-import { genSalt, hash } from "bcryptjs";
+import * as bcrypt from "bcryptjs";
 
 const UserSchema = new Schema(
   {
@@ -39,8 +39,8 @@ const UserSchema = new Schema(
 
 UserSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
-  const salt = await genSalt(10);
-  this.password = await hash(this.password, salt);
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
 export type User = InferSchemaType<typeof UserSchema>;

@@ -1,17 +1,20 @@
-import { sign } from "jsonwebtoken";
 import crypto from "crypto";
-import { compare } from "bcryptjs";
-import { JWT_SECRET, JWT_EXPIRE } from "../config/config";
+import * as bcrypt from "bcryptjs";
 
-export function signToken(id: string, role: string): string {
-  return sign({ id, role }, JWT_SECRET, { expiresIn: JWT_EXPIRE });
+export function parseExpire(expire: string): number {
+  const match = expire.match(/^(\d+)([smhd])$/);
+  if (!match) return Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60;
+  const value = parseInt(match[1]);
+  const unit = match[2];
+  const multipliers: Record<string, number> = { s: 1, m: 60, h: 3600, d: 86400 };
+  return Math.floor(Date.now() / 1000) + value * (multipliers[unit] ?? 86400);
 }
 
 export async function matchPassword(
   entered: string,
-  hashed: string,
+  hashed: string
 ): Promise<boolean> {
-  return compare(entered, hashed);
+  return bcrypt.compare(entered, hashed);
 }
 
 export function generateResetToken(): {

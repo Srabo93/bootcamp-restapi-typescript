@@ -37,7 +37,9 @@ app.get("/:bootcampId/courses", async (c) => {
 
 app.get("/:bootcampId/reviews", async (c) => {
   const bootCampId = c.req.param("bootcampId");
-  const bootCampRelatedReviews = await ReviewModel.findById(bootCampId).exec();
+  const bootCampRelatedReviews = await ReviewModel.find({
+    bootcamp: bootCampId,
+  });
 
   return c.json(bootCampRelatedReviews);
 });

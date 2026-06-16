@@ -21,6 +21,7 @@ ensureBucket();
 
 import bootcamps from "./routes/bootcamps";
 import auth from "./routes/auth";
+import reviews from "./routes/reviews";
 
 const app = new Hono().basePath("/api/v1");
 
@@ -33,6 +34,7 @@ app.get("/", (c) => {
 
 app.route("/bootcamps", bootcamps);
 app.route("/auth", auth);
+app.route("/reviews", reviews);
 
 app.onError((err, c) => {
   if (err instanceof HTTPException) {
@@ -45,6 +47,22 @@ app.onError((err, c) => {
 serve({
   fetch: app.fetch,
   port: 8080,
+});
+
+const server = serve(app);
+// graceful shutdown
+process.on("SIGINT", () => {
+  server.close();
+  process.exit(0);
+});
+process.on("SIGTERM", () => {
+  server.close((err) => {
+    if (err) {
+      console.error(err);
+      process.exit(1);
+    }
+    process.exit(0);
+  });
 });
 export default app;
 

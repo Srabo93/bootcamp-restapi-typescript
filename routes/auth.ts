@@ -2,9 +2,11 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { HTTPException } from "hono/http-exception";
+import { sign } from "hono/jwt";
 import crypto from "crypto";
 import { authenticate } from "../middlewares/auth";
-import { signToken, matchPassword, generateResetToken } from "../utils/auth";
+import { matchPassword, generateResetToken, parseExpire } from "../utils/auth";
+import { JWT_SECRET, JWT_EXPIRE } from "../config/config";
 import UserModel from "../models/User";
 import sendEmail from "../utils/sendEmail";
 
@@ -26,7 +28,11 @@ app.post(
     const exists = await UserModel.findOne({ email });
     if (exists) throw new HTTPException(409, { message: "Already exists" });
     const user = await UserModel.create({ name, email, password, role });
-    const token = signToken(user._id.toString(), user.role);
+    const token = await sign(
+      { id: user._id.toString(), role: user.role, exp: parseExpire(JWT_EXPIRE) },
+      JWT_SECRET,
+      "HS256"
+    );
     return c.json({ success: true, token }, 201);
   }
 );
@@ -47,7 +53,11 @@ app.post(
     const isMatch = await matchPassword(password, user.password);
     if (!isMatch)
       throw new HTTPException(401, { message: "Invalid credentials" });
-    const token = signToken(user._id.toString(), user.role);
+    const token = await sign(
+      { id: user._id.toString(), role: user.role, exp: parseExpire(JWT_EXPIRE) },
+      JWT_SECRET,
+      "HS256"
+    );
     return c.json({ success: true, token }, 200);
   }
 );
@@ -104,7 +114,11 @@ app.put(
     if (!isMatch) throw new HTTPException(401, { message: "Invalid password" });
     user.password = newPassword;
     await user.save();
-    const token = signToken(user._id.toString(), user.role);
+    const token = await sign(
+      { id: user._id.toString(), role: user.role, exp: parseExpire(JWT_EXPIRE) },
+      JWT_SECRET,
+      "HS256"
+    );
     return c.json({ success: true, token }, 200);
   }
 );
@@ -170,7 +184,11 @@ app.put(
     user.resetPasswordToken = null;
     user.resetPasswordExpire = null;
     await user.save();
-    const token = signToken(user._id.toString(), user.role);
+    const token = await sign(
+      { id: user._id.toString(), role: user.role, exp: parseExpire(JWT_EXPIRE) },
+      JWT_SECRET,
+      "HS256"
+    );
     return c.json({ success: true, token }, 200);
   }
 );
