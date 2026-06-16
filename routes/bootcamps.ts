@@ -73,8 +73,7 @@ app.post(
       throw new HTTPException(409, { message: "Already exists" });
     }
 
-    body.user = user._id.toString();
-    const newBootcamp = await BootcampModel.create(body);
+    const newBootcamp = await BootcampModel.create({ ...body, user: user._id.toString() });
     return c.json(newBootcamp, 201);
   }
 );
