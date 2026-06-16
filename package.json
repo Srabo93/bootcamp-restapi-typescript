@@ -1,6 +1,7 @@
 {
   "name": "docker_node_mongo_starter",
   "version": "1.0.0",
+  "type": "module",
   "description": "docker starter with node js and mongodb services",
   "scripts": {
     "start": "node --env-file=./.env dist/server.js",

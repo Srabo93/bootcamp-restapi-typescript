@@ -15,7 +15,7 @@ export const authenticate = async (
   const jwtMiddleware = jwt({ secret: JWT_SECRET, alg: "HS256" });
   await jwtMiddleware(c, async () => {
     const { id, role } = c.get("jwtPayload");
-    c.set("user", { _id: id, role });
+    c.set("user", { _id: id.toString(), role });
     await next();
   });
 };

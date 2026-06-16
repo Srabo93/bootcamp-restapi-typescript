@@ -71,7 +71,7 @@ app.post(
       throw new HTTPException(409, { message: "Already exists" });
     }
 
-    body.user = user._id;
+    body.user = user._id.toString();
     const newBootcamp = await BootcampModel.create(body);
     return c.json(newBootcamp, 201);
   }
@@ -108,7 +108,7 @@ app.put(
       throw new HTTPException(404, { message: "Bootcamp not found" });
     }
 
-    if (!bootcamp?.user.equals(user.id) && user?.role !== "admin") {
+    if (!bootcamp?.user.equals(user._id)) {
       throw new HTTPException(401, { message: "Unauthorized" });
     }
 
@@ -135,7 +135,7 @@ app.delete(
       throw new HTTPException(404, { message: "Bootcamp not found" });
     }
 
-    if (!bootcamp.user.equals(user._id) && user.role !== "admin") {
+    if (!bootcamp.user.equals(user._id)) {
       throw new HTTPException(401, { message: "Unauthorized" });
     }
 
@@ -158,7 +158,7 @@ app.put(
       throw new HTTPException(404, { message: "Bootcamp not found" });
     }
 
-    if (!bootcamp.user.equals(user._id) && user.role !== "admin") {
+    if (!bootcamp.user.equals(user._id)) {
       throw new HTTPException(401, { message: "Unauthorized" });
     }
 
