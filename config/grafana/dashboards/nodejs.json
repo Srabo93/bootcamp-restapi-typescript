@@ -1,0 +1,68 @@
+{
+  "title": "Node.js Runtime",
+  "uid": "nodejs-runtime",
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "browser",
+  "panels": [
+    {
+      "title": "Heap Memory",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "process.runtime.nodejs.memory.heap.used",
+          "legendFormat": "used"
+        },
+        {
+          "expr": "process.runtime.nodejs.memory.heap.total",
+          "legendFormat": "total"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": { "showPoints": "never" }
+        }
+      }
+    },
+    {
+      "title": "Event Loop Delay",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "rate(nodejs.event_loop.delay.avg[$__rate_interval])",
+          "legendFormat": "avg delay"
+        },
+        {
+          "expr": "rate(nodejs.event_loop.delay.max[$__rate_interval])",
+          "legendFormat": "max delay"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": { "showPoints": "never" }
+        }
+      }
+    },
+    {
+      "title": "CPU Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "rate(process.cpu.time[$__rate_interval])",
+          "legendFormat": "{{process.cpu.state}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "showPoints": "never" }
+        }
+      }
+    }
+  ]
+}

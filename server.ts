@@ -1,12 +1,7 @@
-// import express, { Request, Response } from "express";
-// import errorHandler from "./middlewares/error";
-// import cookieParser from "cookie-parser";
-// import bodyParser from "body-parser";
-// import cors from "cors";
-// import morgan from "morgan";
-// import helmet from "helmet";
+import "./tracing";
 
 import { Hono } from "hono";
+import { httpInstrumentationMiddleware } from "@hono/otel";
 
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
@@ -27,6 +22,13 @@ import users from "./routes/users";
 
 const app = new Hono().basePath("/api/v1");
 
+app.use(
+  "*",
+  httpInstrumentationMiddleware({
+    serviceName: "bootcamp-api",
+    serviceVersion: "1.0.0",
+  }),
+);
 app.use(cors());
 app.use(logger());
 app.use(secureHeaders());
