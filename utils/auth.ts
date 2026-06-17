@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import * as bcrypt from "bcryptjs";
+import bcrypt from "bcryptjs";
 
 export function parseExpire(expire: string): number {
   const match = expire.match(/^(\d+)([smhd])$/);

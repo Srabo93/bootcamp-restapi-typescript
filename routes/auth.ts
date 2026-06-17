@@ -4,6 +4,7 @@ import { z } from "zod";
 import { HTTPException } from "hono/http-exception";
 import { sign } from "hono/jwt";
 import crypto from "crypto";
+import mongoose from "mongoose";
 import { authenticate } from "../middlewares/auth";
 import { matchPassword, generateResetToken, parseExpire } from "../utils/auth";
 import { JWT_SECRET, JWT_EXPIRE } from "../config/config";
@@ -27,13 +28,20 @@ app.post(
     const { name, email, password, role } = c.req.valid("json");
     const exists = await UserModel.findOne({ email });
     if (exists) throw new HTTPException(409, { message: "Already exists" });
-    const user = await UserModel.create({ name, email, password, role });
-    const token = await sign(
-      { id: user._id.toString(), role: user.role, exp: parseExpire(JWT_EXPIRE) },
-      JWT_SECRET,
-      "HS256"
-    );
-    return c.json({ success: true, token }, 201);
+    try {
+      const user = await UserModel.create({ name, email, password, role });
+      const token = await sign(
+        { id: user._id.toString(), role: user.role, exp: parseExpire(JWT_EXPIRE) },
+        JWT_SECRET,
+        "HS256"
+      );
+      return c.json({ success: true, token }, 201);
+    } catch (err) {
+      if (err instanceof mongoose.mongo.MongoServerError && err.code === 11000) {
+        throw new HTTPException(409, { message: "Already exists" });
+      }
+      throw err;
+    }
   }
 );
 

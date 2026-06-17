@@ -1,5 +1,5 @@
 import { model, Schema, InferSchemaType } from "mongoose";
-import * as bcrypt from "bcryptjs";
+import bcrypt from "bcryptjs";
 
 const UserSchema = new Schema(
   {

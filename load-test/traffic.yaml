@@ -1,0 +1,163 @@
+config:
+  target: "http://localhost:8080"
+  phases:
+    - duration: 120
+      arrivalRate: 1
+      rampTo: 15
+      name: "Warm up"
+    - duration: 300
+      arrivalRate: 15
+      rampTo: 50
+      name: "Ramp to peak"
+    - duration: 600
+      arrivalRate: 50
+      name: "Sustained load"
+  payload:
+    - path: "users.csv"
+      fields: ["email", "password"]
+      skipHeader: true
+      order: random
+    - path: "bootcamps.csv"
+      fields: ["address"]
+      skipHeader: true
+      order: random
+    - path: "courses.csv"
+      fields: ["title"]
+      skipHeader: true
+      order: random
+
+scenarios:
+  - name: "Browse"
+    weight: 6
+    flow:
+      - get:
+          url: "/api/v1/bootcamps"
+          capture:
+            - json: "$[0]._id"
+              as: "bootcampId"
+              strict: false
+      - get:
+          url: "/api/v1/bootcamps/{{ bootcampId }}"
+          strict: false
+      - get:
+          url: "/api/v1/bootcamps/{{ bootcampId }}/courses"
+          strict: false
+      - get:
+          url: "/api/v1/courses"
+      - get:
+          url: "/api/v1/reviews"
+
+  - name: "Login & Profile"
+    weight: 4
+    flow:
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - get:
+          url: "/api/v1/auth/me"
+          headers:
+            Authorization: "Bearer {{ token }}"
+      - put:
+          url: "/api/v1/auth/updatedetails"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            name: "Updated Name"
+
+  - name: "Publisher Flow"
+    weight: 2
+    flow:
+      - post:
+          url: "/api/v1/auth/register"
+          json:
+            name: "Publisher {{ $randomString(8) }}"
+            email: "pub-{{ $randomString(8) }}@loadtest.com"
+            password: "password123"
+            role: "publisher"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - post:
+          url: "/api/v1/bootcamps"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            name: "Bootcamp {{ $randomString(15) }}"
+            description: "Load test bootcamp created by Artillery during automated testing."
+            address: "{{ address }}"
+            careers:
+              - "Web Development"
+              - "Mobile Development"
+          capture:
+            - json: "$.data._id"
+              as: "bootcampId"
+              strict: false
+      - post:
+          url: "/api/v1/courses"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            title: "{{ title }}"
+            description: "Course created during automated load test execution."
+            weeks: 8
+            tuition: 5000
+            minimumSkill: "beginner"
+            scholarshipAvailable: false
+            bootcamp: "{{ bootcampId }}"
+
+  - name: "Review"
+    weight: 3
+    flow:
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - get:
+          url: "/api/v1/bootcamps"
+          capture:
+            - json: "$.data[0]._id"
+              as: "bootcampId"
+              strict: false
+      - post:
+          url: "/api/v1/reviews"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            title: "Load test review"
+            text: "Automated review generated during Artillery load testing."
+            rating: "{{ $randomInteger(3,10) }}"
+            bootcamp: "{{ bootcampId }}"
+
+  - name: "Photo Upload"
+    weight: 1
+    flow:
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - get:
+          url: "/api/v1/bootcamps"
+          capture:
+            - json: "$.data[0]._id"
+              as: "bootcampId"
+              strict: false
+      - put:
+          url: "/api/v1/bootcamps/{{ bootcampId }}/photo"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          formData:
+            file:
+              fromFile: "./payloads/photo.png"

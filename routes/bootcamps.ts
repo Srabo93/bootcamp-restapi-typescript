@@ -10,38 +10,44 @@ import { S3_ENDPOINT, S3_BUCKET } from "../config/config";
 
 const app = new Hono();
 
+const paramSchema = z.object({
+  bootcampId: z.string().regex(/^[0-9a-fA-F]{24}$/),
+});
+
 app.get("/", async (c) => {
   const allBootcamps = await BootcampModel.find({}).populate("courses");
 
   return c.json(allBootcamps);
 });
 
-app.get("/:bootcampId", async (c) => {
-  const param = c.req.param("bootcampId");
-  const bootcamp = await BootcampModel.findById(param).populate("courses");
+app.get("/:bootcampId", zValidator("param", paramSchema), async (c) => {
+  const { bootcampId } = c.req.valid("param");
+  const bootcamp = await BootcampModel.findById(bootcampId).populate("courses");
 
+  if (!bootcamp) throw new HTTPException(404);
   return c.json(bootcamp);
 });
 
-app.get("/:bootcampId/courses", async (c) => {
-  const bootCampId = c.req.param("bootcampId");
-  const bootCampRelatedCourses = await BootcampModel.findById(
-    bootCampId,
+app.get("/:bootcampId/courses", zValidator("param", paramSchema), async (c) => {
+  const { bootcampId } = c.req.valid("param");
+  const bootcamp = await BootcampModel.findById(
+    bootcampId,
     "name description website"
   )
     .populate("courses")
     .exec();
 
-  return c.json(bootCampRelatedCourses);
+  if (!bootcamp) throw new HTTPException(404);
+  return c.json(bootcamp);
 });
 
-app.get("/:bootcampId/reviews", async (c) => {
-  const bootCampId = c.req.param("bootcampId");
-  const bootCampRelatedReviews = await ReviewModel.find({
-    bootcamp: bootCampId,
+app.get("/:bootcampId/reviews", zValidator("param", paramSchema), async (c) => {
+  const { bootcampId } = c.req.valid("param");
+  const reviews = await ReviewModel.find({
+    bootcamp: bootcampId,
   });
 
-  return c.json(bootCampRelatedReviews);
+  return c.json(reviews);
 });
 
 app.post(

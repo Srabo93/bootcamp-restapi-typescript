@@ -1,8 +1,5 @@
-import "./tracing";
-
 import { Hono } from "hono";
-import { httpInstrumentationMiddleware } from "@hono/otel";
-
+import { prometheus } from "@hono/prometheus";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
@@ -20,15 +17,14 @@ import reviews from "./routes/reviews";
 import courses from "./routes/courses";
 import users from "./routes/users";
 
+const { printMetrics, registerMetrics } = prometheus({
+  collectDefaultMetrics: { eventLoopMonitoringPrecision: 5000 },
+});
+
 const app = new Hono().basePath("/api/v1");
 
-app.use(
-  "*",
-  httpInstrumentationMiddleware({
-    serviceName: "bootcamp-api",
-    serviceVersion: "1.0.0",
-  }),
-);
+app.use("*", registerMetrics);
+app.get("/metrics", printMetrics);
 app.use(cors());
 app.use(logger());
 app.use(secureHeaders());
